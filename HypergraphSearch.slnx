@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="HypergraphSearch/HypergraphSearch.vcxproj" Id="2d90879c-5631-488e-8a5f-f9985cfebff8" />
+</Solution>
