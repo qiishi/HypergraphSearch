@@ -185,9 +185,9 @@ void OBBAB(unordered_set<int>& C, unordered_set<int>& P) {
 }
 
 int main() {
-    string fileName = "D:\\ExamProject\\Exam1\\HypergraphSearch\\x64\\Debug\\NDCC.txt"; // 替换为你的数据集路径
-    K_val = 3; S_val = 3;
-    int queryV = 5;
+    string fileName = "D:\\ExamProject\\Exam1\\HypergraphSearch\\x64\\Debug\\dblp.txt"; //数据集路径
+    K_val = 2; S_val = 2;
+    int queryV = 15;
 
     auto start = chrono::steady_clock::now();
 
