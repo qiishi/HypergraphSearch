@@ -1,0 +1,200 @@
+[1mdiff --git a/HypergraphSearch/test.cpp b/HypergraphSearch/test.cpp[m
+[1mindex 09ba91a..a388c9d 100644[m
+[1m--- a/HypergraphSearch/test.cpp[m
+[1m+++ b/HypergraphSearch/test.cpp[m
+[36m@@ -1,797 +1,226 @@[m
+[31m-﻿//// 调整头文件顺序，避免编码/依赖问题[m
+[31m-//#include <iostream>[m
+[31m-//#include <string>[m
+[31m-//#include <vector>[m
+[31m-//#include <fstream>[m
+[31m-//#include <sstream>[m
+[31m-//#include <set>[m
+[31m-//#include <unordered_map>[m
+[31m-//#include <unordered_set>[m
+[31m-//#include <queue>[m
+[31m-//#include <chrono>[m
+[31m-//#include <map>[m
+[31m-//#include <climits>[m
+[31m-//#include <algorithm>[m
+[31m-//#include <random>[m
+[31m-//#include <thread>[m
+[31m-//#include <mutex>[m
+[31m-//#include <omp.h>[m
+[31m-//#include <bitset>[m
+[31m-//#include <direct.h>  // Windows下获取当前目录的头文件[m
+[31m-//#include <iomanip>   // 用于格式化输出进度[m
+[31m-//using namespace std;[m
+[31m-//[m
+[31m-//// ========== 新增：全局进度监控工具类 ==========[m
+[31m-//class ProgressMonitor {[m
+[31m-//private:[m
+[31m-//    string stageName;       // 当前阶段名称（如"超图构建"）[m
+[31m-//    long long total;        // 总任务数[m
+[31m-//    long long completed;    // 已完成任务数[m
+[31m-//    chrono::steady_clock::time_point start_time; // 阶段开始时间[m
+[31m-//    mutex mtx;              // 线程安全锁（防止并行时进度计数错乱）[m
+[31m-//    bool first_output;      // 是否首次输出[m
+[31m-//[m
+[31m-//public:[m
+[31m-//    ProgressMonitor() : total(0), completed(0), first_output(true) {}[m
+[31m-//[m
+[31m-//    // 初始化进度监控[m
+[31m-//    void init(const string& name, long long total_tasks) {[m
+[31m-//        lock_guard<mutex> lock(mtx);[m
+[31m-//        stageName = name;[m
+[31m-//        total = total_tasks;[m
+[31m-//        completed = 0;[m
+[31m-//        start_time = chrono::steady_clock::now();[m
+[31m-//        first_output = true;[m
+[31m-//        cout << "\n========== 开始阶段：" << stageName << " (总任务数：" << total << ") ==========" << endl;[m
+[31m-//    }[m
+[31m-//[m
+[31m-//    // 完成一个任务，更新进度[m
+[31m-//    void update(long long num = 1) {[m
+[31m-//        lock_guard<mutex> lock(mtx);[m
+[31m-//        completed += num;[m
+[31m-//        // 每完成1% 或 首次执行 时输出进度（避免刷屏）[m
+[31m-//        if (first_output || (completed % max(1LL, total / 100)) == 0 || completed == total) {[m
+[31m-//            first_output = false;[m
+[31m-//            printProgress();[m
+[31m-//        }[m
+[31m-//    }[m
+[31m-//[m
+[31m-//    // 打印进度（含已耗时、剩余时间预估）[m
+[31m-//    void printProgress() {[m
+[31m-//        auto now = chrono::steady_clock::now();[m
+[31m-//        double elapsed = chrono::duration<double>(now - start_time).count(); // 已耗时（秒）[m
+[31m-//        double progress = (total == 0) ? 100.0 : (double)completed / total * 100.0; // 进度百分比[m
+[31m-//        double remaining = (progress == 0) ? 0 : elapsed * (100 - progress) / progress; // 剩余时间（秒）[m
+[31m-//[m
+[31m-//        // 格式化输出：进度条 + 百分比 + 已耗时 + 剩余时间[m
+[31m-//        cout << "\r[" << stageName << "] "[m
+[31m-//            << "进度: [" << setw(50) << setfill('=') << string((int)(progress / 2), '=') << setfill(' ') << "] "[m
+[31m-//            << fixed << setprecision(2) << progress << "% "[m
+[31m-//            << "已耗时: " << formatTime(elapsed) << " "[m
+[31m-//            << "剩余预估: " << formatTime(remaining) << " ";[m
+[31m-//        cout.flush(); // 强制刷新输出缓冲区[m
+[31m-//[m
+[31m-//        // 阶段完成时输出总耗时[m
+[31m-//        if (completed >= total) {[m
+[31m-//            cout << "\n[" << stageName << "] 完成！总耗时：" << formatTime(elapsed) << endl;[m
+[31m-//        }[m
+[31m-//    }[m
+[31m-//[m
+[31m-//    // 格式化时间（秒 → 时:分:秒）[m
+[31m-//    string formatTime(double seconds) {[m
+[31m-//        int h = (int)seconds / 3600;[m
+[31m-//        int m = ((int)seconds % 3600) / 60;[m
+[31m-//        int s = (int)seconds % 60;[m
+[31m-//        return to_string(h) + "h" + to_string(m) + "m" + to_string(s) + "s";[m
+[31m-//    }[m
+[31m-//[m
+[31m-//    // 获取已完成数[m
+[31m-//    long long getCompleted() { return completed; }[m
+[31m-//};[m
+[31m-//[m
+[31m-//// 全局进度监控实例（不同阶段复用）[m
+[31m-//ProgressMonitor g_progress;[m
+[31m-//[m
+[31m-//typedef pair<int, int> PII;[m
+[31m-//unordered_set<int> best;[m
+[31m-//[m
+[31m-//// ========== 原有比较器保持不变 ==========[m
+[31m-//struct myCmp[m
+[31m-//{[m
+[31m-//    bool operator()(const PII& a, const PII& b) const[m
+[31m-//    {[m
+[31m-//        if (a.second != b.second)[m
+[31m-//            return a.second < b.second;[m
+[31m-//        else[m
+[31m-//            return a.first < b.first;[m
+[31m-//    }[m
+[31m-//};[m
+[31m-//[m
+[31m-//struct myCmp1[m
+[31m-//{[m
+[31m-//    bool operator()(const PII& a, const PII& b) const[m
+[31m-//    {[m
+[31m-//        if (a.second != b.second)[m
+[31m-//            return a.second > b.second;[m
+[31m-//        else[m
+[31m-//            return a.first > b.first;[m
+[31m-//    }[m
+[31m-//};[m
+[31m-//[m
+[31m-//struct myCmp2[m
+[31m-//{[m
+[31m-//    bool operator()(const pair<int, double>& a, const pair<int, double>& b) const[m
+[31m-//    {[m
+[31m-//        if (a.second != b.second)[m
+[31m-//            return a.second > b.second;[m
+[31m-//        else[m
+[31m-//            return a.first > b.first;[m
+[31m-//    }[m
+[31m-//};[m
+[31m-//[m
+[31m-//// ========== 优化compute函数（原有逻辑不变） ==========[m
+[31m-//int compute(const vector<int>& a, const vector<int>& b)[m
+[31m-//{[m
+[31m-//    unordered_set<int> map;[m
+[31m-//    for (auto x : a)[m
+[31m-//    {[m
+[31m-//        map.insert(x);[m
+[31m-//    }[m
+[31m-//[m
+[31m-//    int count = 0;[m
+[31m-//    for (auto x : b)[m
+[31m-//    {[m
+[31m-//        if (map.count(x) > 0)[m
+[31m-//        {[m
+[31m-//            count++;[m
+[31m-//        }[m
+[31m-//    }[m
+[31m-//    return count;[m
+[31m-//}[m
+[31m-//[m
+[31m-//// ========== 修改getGraph：添加进度监控 ==========[m
+[31m-//void getGraph(const string& str, vector<vector<int>>& hyperEdge, vector<vector<int>>& incidentHyperedge, int x)[m
+[31m-//{[m
+[31m-//    string filename = str;[m
+[31m-//    ifstream fin(filename, ios::in);[m
+[31m-//    if (!fin)[m
+[31m-//        throw runtime_error("Could not open file " + str);[m
+[31m-//[m
+[31m-//    int count = 0;[m
+[31m-//    unordered_map<int, vector<int>> tmpnode;[m
+[31m-//    string line;[m
+[31m-//[m
+[31m-//    // 第一步：先统计文件总行数（用于进度预估）[m
+[31m-//    cout << "正在统计文件行数...";[m
+[31m-//    long long total_lines = 0;[m
+[31m-//    while (getline(fin, line)) {[m
+[31m-//        if (!line.empty()) total_lines++;[m
+[31m-//    }[m
+[31m-//    fin.clear(); // 重置文件指针[m
+[31m-//    fin.seekg(0); // 回到文件开头[m
+[31m-//    cout << "完成！总行数：" << total_lines << endl;[m
+[31m-//[m
+[31m-//    // 第二步：读取文件，监控进度[m
+[31m-//    g_progress.init("读取超图数据", total_lines);[m
+[31m-//    while (getline(fin, line))[m
+[31m-//    {[m
+[31m-//        g_progress.update(); // 每读一行更新进度[m
+[31m-//        if (line.empty())[m
+[31m-//            continue;[m
+[31m-//        istringstream ss(line);[m
+[31m-//        int tmp;[m
+[31m-//        vector<int> e;[m
+[31m-//        while (ss >> tmp)[m
+[31m-//        {[m
+[31m-//            e.push_back(tmp);[m
+[31m-//        }[m
+[31m-//        if (e.size() < x)[m
+[31m-//            continue;[m
+[31m-//        hyperEdge.push_back(e);[m
+[31m-//        count++;[m
+[31m-//    }[m
+[31m-//    fin.close();[m
+[31m-//[m
+
